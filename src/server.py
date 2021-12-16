@@ -10,9 +10,22 @@ from rembg.bg import remove
 
 app = Flask(__name__)
 
+@app.route("/", methods=["GET"])
+def index():
+    return """
+<html>
+<body>
+<form action="/api/remove-background" method="post" enctype="multipart/form-data">
+   <input type="file" name="file"/>
+   <input type="submit" value="upload"/>
+</form>
+</body>
+</html>
+"""
+
 
 @app.route("/api/remove-background", methods=["POST"])
-def index():
+def remove_background():
     file_content = ""
     if "file" not in request.files:
         return {"error": "missing post form param 'file'"}, 400
