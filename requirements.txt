@@ -2,3 +2,4 @@ rembg
 torch
 torchvision
 matplotlib
+gunicorn

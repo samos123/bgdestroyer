@@ -9,4 +9,4 @@ ENV PATH="/home/bgremover/.local/bin:${PATH}"
 RUN pip3 install --user --no-cache-dir -r requirements.txt
 COPY --chown=bgremover:bgremover src/. .
 RUN python3 load-model.py
-CMD [ "python3", "server.py" ]
+CMD exec gunicorn --bind :$PORT --workers 1 --threads 8 --timeout 0 server:app

@@ -5,7 +5,6 @@ from urllib.request import urlopen
 
 from flask import Flask, request, send_file
 from waitress import serve
-from rembg.bg import remove
 
 
 app = Flask(__name__)
@@ -26,6 +25,7 @@ def index():
 
 @app.route("/api/remove-background", methods=["POST"])
 def remove_background():
+    from rembg.bg import remove
     file_content = ""
     if "file" not in request.files:
         return {"error": "missing post form param 'file'"}, 400
