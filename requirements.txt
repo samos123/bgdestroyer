@@ -1,5 +1,7 @@
-rembg
+gunicorn
+flask
+waitress
+rembg==2.0.21
+--extra-index-url https://download.pytorch.org/whl/cpu
 torch
 torchvision
-matplotlib
-gunicorn

@@ -47,15 +47,14 @@ def remove_background():
             BytesIO(
                 remove(
                     file_content,
-                    model_name=model,
                     alpha_matting=alpha_matting,
                     alpha_matting_foreground_threshold=af,
                     alpha_matting_background_threshold=ab,
-                    alpha_matting_erode_structure_size=ae,
-                    alpha_matting_base_size=az,
+                    alpha_matting_erode_size=ae,
                 )
             ),
             mimetype="image/png",
+            attachment_filename="test.png",
         )
     except Exception as e:
         app.logger.exception(e, exc_info=True)
@@ -76,7 +75,7 @@ def main():
     ap.add_argument(
         "-p",
         "--port",
-        default=5000,
+        default=8080,
         type=int,
         help="The port to bind to.",
     )
