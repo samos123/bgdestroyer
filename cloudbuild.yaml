@@ -1,0 +1,16 @@
+images:
+- 'gcr.io/bgdestroyer/bgdestroyer-worker'
+
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'build', '-t', 'gcr.io/bgdestroyer/bgdestroyer-worker', '.' ]
+  env:
+  - "DOCKER_BUILDKIT=1"
+- name: 'gcr.io/cloud-builders/docker'
+  args: [ 'push', 'gcr.io/bgdestroyer/bgdestroyer-worker']
+  env:
+  - "DOCKER_BUILDKIT=1"
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: gcloud
+  args: ['run', 'deploy', 'bg-remover', '--image', 'gcr.io/bgdestroyer/bgdestroyer-worker',
+         '--region', 'us-central1', '--cpu=2', '--memory=2Gi', '--max-instances=10', '--allow-unauthenticated']
