@@ -1,3 +1,3 @@
-from rembg.u2net import detect
+from rembg.session_factory import new_session
 
-detect.load_model("u2net")
+new_session("u2net")
