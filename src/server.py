@@ -4,11 +4,13 @@ from urllib.parse import quote, unquote_plus
 from urllib.request import urlopen
 
 from flask import Flask, request, send_file
+from flask_cors import CORS
 from waitress import serve
 from rembg.bg import remove
 
 
 app = Flask(__name__)
+CORS(app)
 
 @app.route("/", methods=["GET"])
 def index():
@@ -54,7 +56,7 @@ def remove_background():
                 )
             ),
             mimetype="image/png",
-            attachment_filename="test.png",
+            download_name="test_bgdestroyer.png",
         )
     except Exception as e:
         app.logger.exception(e, exc_info=True)

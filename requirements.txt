@@ -1,5 +1,6 @@
 gunicorn
 flask
+flask-cors
 waitress
 rembg==2.0.21
 --extra-index-url https://download.pytorch.org/whl/cpu
