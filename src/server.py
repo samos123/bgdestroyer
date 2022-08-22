@@ -2,15 +2,23 @@ import argparse
 from io import BytesIO
 from urllib.parse import quote, unquote_plus
 from urllib.request import urlopen
+from functools import wraps
 
 from flask import Flask, request, send_file
 from flask_cors import CORS
 from waitress import serve
 from rembg.bg import remove
+from firebase.admin import auth
+import redis
+
+REDIS_HOST = os.getenv('REDIS_HOST')
+REDIS_PORT = os.getenv('REDIS_PORT')
+r = redis.Redis(host=REDIS_HOST, port=6379, db=0)
 
 
 app = Flask(__name__)
 CORS(app)
+# default_app = firebase_admin.initialize_app()
 
 @app.route("/", methods=["GET"])
 def index():
@@ -25,9 +33,40 @@ def index():
 </html>
 """
 
+def rate_limit(f):
+    @wraps(f)
+    def inner(*args, **kwargs):
+        auth_header = request.headers.get("Authorization")
+        if auth_header:
+            token = auth_header.split(" ")[1]
+            try:
+                decoded_token = auth.verify_id_token(id_token)
+                uid = decoded_token['uid']
+                user = auth.get_user(uid)
+                kwargs["user"] = user
+            except (ValueError, InvalidIdToken) as e:
+                return jsonify({"error": "invalid JWT token"}), 403
+            except:
+                return jsonify({"error": "Error Validating JWT token"}), 403
+        else:
+            forwarded_header = request.headers.get("X-Forwarded-For")
+            if forwarded_header:
+                source_ip = request.headers.getlist("X-Forwarded-For")[0]
+                key = "ip:"+source_ip+":images"
+                current_images = r.get(key)
+                if current_images and current_images >= 2:
+                    return jsonify({"error": ("You've exceeded the rate limit "
+                        "of 2 images per month. Register for a free account"
+                        "to increase your limit")}), 429
+                if current_images == None:
+                    redis.set(key, 1, ex=2629800) # 1 month expiry
+                elif current_images >= 0:
+                    redis.incr(key)
+        return f(*args, **kwargs)
+    return inner
 
 @app.route("/remove", methods=["POST"])
-def remove_background():
+def remove_background(user=None):
     file_content = ""
     if "file" not in request.files:
         return {"error": "missing post form param 'file'"}, 400
