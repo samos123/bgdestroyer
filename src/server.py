@@ -4,6 +4,8 @@ from urllib.parse import quote, unquote_plus
 from urllib.request import urlopen
 from functools import wraps
 import os
+import logging
+import traceback
 
 from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
@@ -12,12 +14,19 @@ from rembg.bg import remove
 from firebase_admin import auth
 import redis
 
-REDIS_HOST = os.getenv('REDIS_HOST')
-REDIS_PORT = os.getenv('REDIS_PORT')
+REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
+REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 REDIS_SSL = os.getenv("REDIS_SSL", 'False').lower() in ('true', '1', 't', 'yes')
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
 r = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0, ssl=REDIS_SSL, password=REDIS_PASSWORD)
+redis_connected = False
 
+try:
+    r.ping()
+    redis_connected = True
+except Exception as e:
+    logging.error("error connecting to redis")
+    logging.error(traceback.format_exc())
 
 app = Flask(__name__)
 CORS(app)
@@ -39,6 +48,8 @@ def index():
 def rate_limit(f):
     @wraps(f)
     def inner(*args, **kwargs):
+        if not redis_connected:
+            return f(*args, **kwargs)
         auth_header = request.headers.get("Authorization")
         if auth_header:
             token = auth_header.split(" ")[1]
