@@ -3,17 +3,20 @@ from io import BytesIO
 from urllib.parse import quote, unquote_plus
 from urllib.request import urlopen
 from functools import wraps
+import os
 
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from waitress import serve
 from rembg.bg import remove
-from firebase.admin import auth
+from firebase_admin import auth
 import redis
 
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
-r = redis.Redis(host=REDIS_HOST, port=6379, db=0)
+REDIS_SSL = os.getenv("REDIS_SSL", 'False').lower() in ('true', '1', 't', 'yes')
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
+r = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0, ssl=REDIS_SSL, password=REDIS_PASSWORD)
 
 
 app = Flask(__name__)
@@ -54,18 +57,19 @@ def rate_limit(f):
                 source_ip = request.headers.getlist("X-Forwarded-For")[0]
                 key = "ip:"+source_ip+":images"
                 current_images = r.get(key)
-                if current_images and current_images >= 2:
+                if current_images and int(current_images) >= 2:
                     return jsonify({"error": ("You've exceeded the rate limit "
                         "of 2 images per month. Register for a free account"
                         "to increase your limit")}), 429
-                if current_images == None:
-                    redis.set(key, 1, ex=2629800) # 1 month expiry
-                elif current_images >= 0:
-                    redis.incr(key)
+                if current_images == None or int(current_images) == 0:
+                    r.set(key, 1, ex=2629800) # 1 month expiry
+                elif int(current_images) >= 1:
+                    r.incr(key)
         return f(*args, **kwargs)
     return inner
 
 @app.route("/remove", methods=["POST"])
+@rate_limit
 def remove_background(user=None):
     file_content = ""
     if "file" not in request.files:
