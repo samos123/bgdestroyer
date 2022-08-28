@@ -11,7 +11,9 @@ from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 from waitress import serve
 from rembg.bg import remove
+import firebase_admin
 from firebase_admin import auth
+from firebase_admin.auth import InvalidIdTokenError
 import redis
 
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
@@ -27,6 +29,8 @@ try:
 except Exception as e:
     logging.error("error connecting to redis")
     logging.error(traceback.format_exc())
+
+default_app = firebase_admin.initialize_app()
 
 app = Flask(__name__)
 CORS(app)
@@ -54,14 +58,16 @@ def rate_limit(f):
         if auth_header:
             token = auth_header.split(" ")[1]
             try:
-                decoded_token = auth.verify_id_token(id_token)
+                decoded_token = auth.verify_id_token(token)
                 uid = decoded_token['uid']
                 user = auth.get_user(uid)
                 kwargs["user"] = user
-            except (ValueError, InvalidIdToken) as e:
+            except (ValueError, InvalidIdTokenError) as e:
+                logging.error("Invalid Token:", e)
+                logging.error(traceback.format_exc())
                 return jsonify({"error": "invalid JWT token"}), 403
-            except:
-                return jsonify({"error": "Error Validating JWT token"}), 403
+            except Exception as e:
+                return jsonify({"error": "Error Validating JWT token: %s" % (e)}), 403
         else:
             forwarded_header = request.headers.get("X-Forwarded-For")
             if forwarded_header:

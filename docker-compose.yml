@@ -8,6 +8,9 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_PASSWORD: eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/keys/keyfile.json
+    volumes:
+      - ./bgdestroyer.json:/tmp/keys/keyfile.json:ro
     links:
       - redis
     depends_on:
