@@ -21,7 +21,8 @@ REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 REDIS_SSL = os.getenv("REDIS_SSL", 'False').lower() in ('true', '1', 't', 'yes')
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", None)
-r = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0, ssl=REDIS_SSL, password=REDIS_PASSWORD)
+r = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0, ssl=REDIS_SSL,
+        password=REDIS_PASSWORD, socket_connect_timeout=2)
 redis_connected = False
 
 try:
