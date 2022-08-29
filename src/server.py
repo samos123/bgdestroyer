@@ -17,6 +17,8 @@ from firebase_admin import auth
 from firebase_admin.auth import InvalidIdTokenError
 import redis
 
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 REDIS_SSL = os.getenv("REDIS_SSL", 'False').lower() in ('true', '1', 't', 'yes')
@@ -25,19 +27,24 @@ r = redis.Redis(host=REDIS_HOST, port=int(REDIS_PORT), db=0, ssl=REDIS_SSL,
         password=REDIS_PASSWORD, socket_connect_timeout=2)
 redis_connected = False
 
+app = Flask(__name__)
+CORS(app)
+
 try:
+    logging.info("trying to connect to redis %s:%s", REDIS_HOST, REDIS_PORT)
     r.ping()
     redis_connected = True
 except Exception as e:
     logging.error("error connecting to redis")
     logging.error(traceback.format_exc())
 
-default_app = firebase_admin.initialize_app()
+try:
+    logging.info("Initializing firebase default app")
+    default_app = firebase_admin.initialize_app()
+except Exception as e:
+    logging.error("error connecting to redis")
+    logging.error(traceback.format_exc())
 
-
-logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-app = Flask(__name__)
-CORS(app)
 # default_app = firebase_admin.initialize_app()
 
 @app.route("/", methods=["GET"])
