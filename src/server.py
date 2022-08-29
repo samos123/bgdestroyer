@@ -4,6 +4,7 @@ from urllib.parse import quote, unquote_plus
 from urllib.request import urlopen
 from functools import wraps
 import os
+import sys
 import logging
 import traceback
 
@@ -32,6 +33,8 @@ except Exception as e:
 
 default_app = firebase_admin.initialize_app()
 
+
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 app = Flask(__name__)
 CORS(app)
 # default_app = firebase_admin.initialize_app()
@@ -75,6 +78,7 @@ def rate_limit(f):
                 key = "ip:"+source_ip+":images"
                 current_images = r.get(key)
                 if current_images and int(current_images) >= 2:
+                    app.logger.info("Rate limit exceeded for %s", source_ip)
                     return jsonify({"error": ("You've exceeded the rate limit "
                         "of 2 images per month. Register for a free account"
                         "to increase your limit")}), 429
@@ -93,6 +97,7 @@ def remove_background(user=None):
         return {"error": "missing post form param 'file'"}, 400
 
     file_content = request.files["file"].read()
+    app.logger.info('got file %s', request.files["file"].filename)
 
     if file_content == "":
         return {"error": "File content is empty"}, 400
