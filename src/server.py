@@ -34,6 +34,7 @@ try:
     logging.info("trying to connect to redis %s:%s", REDIS_HOST, REDIS_PORT)
     r.ping()
     redis_connected = True
+    logging.info("connection to redis successfull %s:%s", REDIS_HOST, REDIS_PORT)
 except Exception as e:
     logging.error("error connecting to redis")
     logging.error(traceback.format_exc())
@@ -92,7 +93,7 @@ def rate_limit(f):
                 app.logger.info("Rate limit exceeded for %s", source_ip)
                 return jsonify({"error": ("You've exceeded the rate limit "
                     "of 2 images per month. Register for a free account "
-                    "to increase your limit")}), 429
+                    "to increase your limit")}), 401
             if current_images == None or int(current_images) == 0:
                 r.set(key, 1, ex=2629800) # 1 month expiry
             elif int(current_images) >= 1:
@@ -137,10 +138,6 @@ def remove_background(user=None):
     except Exception as e:
         app.logger.exception(e, exc_info=True)
         return {"error": "oops, something went wrong!"}, 500
-
-@app.route("/jsonify", methods=["POST"])
-def jsonify_test():
-    return jsonify({"test": "test"}), 429
 
 
 def main():
