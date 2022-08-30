@@ -81,19 +81,22 @@ def rate_limit(f):
                 return jsonify({"error": "Error Validating JWT token: %s" % (e)}), 403
         else:
             forwarded_header = request.headers.get("X-Forwarded-For")
+            source_ip = ""
             if forwarded_header:
                 source_ip = request.headers.getlist("X-Forwarded-For")[0]
-                key = "ip:"+source_ip+":images"
-                current_images = r.get(key)
-                if current_images and int(current_images) >= 2:
-                    app.logger.info("Rate limit exceeded for %s", source_ip)
-                    return jsonify({"error": ("You've exceeded the rate limit "
-                        "of 2 images per month. Register for a free account"
-                        "to increase your limit")}), 429
-                if current_images == None or int(current_images) == 0:
-                    r.set(key, 1, ex=2629800) # 1 month expiry
-                elif int(current_images) >= 1:
-                    r.incr(key)
+            else:
+                source_ip = request.remote_addr
+            key = "ip:"+source_ip+":images"
+            current_images = r.get(key)
+            if current_images and int(current_images) >= 2:
+                app.logger.info("Rate limit exceeded for %s", source_ip)
+                return jsonify({"error": ("You've exceeded the rate limit "
+                    "of 2 images per month. Register for a free account "
+                    "to increase your limit")}), 429
+            if current_images == None or int(current_images) == 0:
+                r.set(key, 1, ex=2629800) # 1 month expiry
+            elif int(current_images) >= 1:
+                r.incr(key)
         return f(*args, **kwargs)
     return inner
 
@@ -134,6 +137,10 @@ def remove_background(user=None):
     except Exception as e:
         app.logger.exception(e, exc_info=True)
         return {"error": "oops, something went wrong!"}, 500
+
+@app.route("/jsonify", methods=["POST"])
+def jsonify_test():
+    return jsonify({"test": "test"}), 429
 
 
 def main():
