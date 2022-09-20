@@ -46,20 +46,6 @@ except Exception as e:
     logging.error("error connecting to redis")
     logging.error(traceback.format_exc())
 
-# default_app = firebase_admin.initialize_app()
-
-@app.route("/", methods=["GET"])
-def index():
-    return """
-<html>
-<body>
-<form action="/remove" method="post" enctype="multipart/form-data">
-   <input type="file" name="file"/>
-   <input type="submit" value="upload"/>
-</form>
-</body>
-</html>
-"""
 
 def rate_limit(f):
     @wraps(f)

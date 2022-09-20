@@ -1,10 +1,9 @@
-# image background remover HTTP API / SaaS
+# bgdestroyer.com: image background remover HTTP API / SaaS
 
 A simple REST API in front of an ML model that removes backgrounds from images.
 
 Credit to https://github.com/danielgatis/rembg for the library that
 made this all very easy.
-
 
 ## Deploy to Cloud Run
 
