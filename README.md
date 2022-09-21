@@ -1,9 +1,24 @@
 # bgdestroyer.com: image background remover HTTP API / SaaS
 
-A simple REST API in front of an ML model that removes backgrounds from images.
+Automatically remove the background from your image with the power of AI.
+Available for free through SaaS at bgdestroyer.com and available as open source
+to run it yourself.
 
-Credit to https://github.com/danielgatis/rembg for the library that
-made this all very easy.
+This repo provides the REST API that's consumed by the the frontend. The REST
+API for SaaS version is deployed on Google Cloud Run, however you can deploy
+it somewhere else by simply deploying the docker container.
+
+The source for the frontend used by bgdestroyer.com is available here:
+https://github.com/samos123/bgdestroyer-ui
+
+Credit to https://github.com/danielgatis/rembg for the library to remove the
+background image which made this all very easy.
+
+## Test it locally
+
+```
+docker-compose up
+```
 
 ## Deploy to Cloud Run
 
