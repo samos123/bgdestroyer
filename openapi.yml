@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: bgdestroyer.com - Remove background images
+  description: |-
+    An API to remove the background from images, available at 
+    [bgdestroyer.com](https://bgdestroyer.io). Send an image via
+    post request and get back an image with transparent background.
+
+  termsOfService: https://www.bgdestroyer.com/terms
+  contact:
+    email: info@bgdestroyer.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.1.1
+externalDocs:
+  description: Find out more about bgdestroyer.com
+  url: https://www.bgdestroyer.com.io
+servers:
+  - url: https://api.bgdestroyer.com
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT  # optional, for documentation purposes only
+security:
+  - bearerAuth: []
+paths:
+  /remove:
+    post:
+      summary: Remove background from image
+      description: Remove the background from an image
+      operationId: removeBackground
+      requestBody:
+        description: Provide the image by submitting multipart/form-data
+        content: 
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+              application/png:
+                schema: 
+                  type: string
+                  format: binary
+        '429':
+          description: Rate limit exceeded
+
