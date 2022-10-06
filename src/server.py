@@ -19,6 +19,7 @@ import redis
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
+RATE_LIMIT = os.getenv('RATE_LIMIT', 5)
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = os.getenv('REDIS_PORT', 6379)
 REDIS_SSL = os.getenv("REDIS_SSL", 'False').lower() in ('true', '1', 't', 'yes')
@@ -75,11 +76,11 @@ def rate_limit(f):
                 source_ip = request.remote_addr
             key = "ip:"+source_ip+":images"
             current_images = r.get(key)
-            if current_images and int(current_images) >= 2:
+            if current_images and int(current_images) >= RATE_LIMIT:
                 app.logger.info("Rate limit exceeded for %s", source_ip)
                 return jsonify({"error": ("You've exceeded the rate limit "
-                    "of 2 images per month. Register for a free account "
-                    "to increase your limit")}), 429
+                    "of {0} images per month. Register for a free account "
+                    "to increase your limit").format(RATE_LIMIT)}), 429
             if current_images == None or int(current_images) == 0:
                 r.set(key, 1, ex=2629800) # 1 month expiry
             elif int(current_images) >= 1:
