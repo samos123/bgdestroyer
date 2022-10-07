@@ -16,6 +16,10 @@ background image which made this all very easy.
 
 ## Test it locally
 
+You will first need to download u2net model from here: https://drive.google.com/uc?id=1tCU5MM1LhRgGou5OpmpjBQbSrYIUoYab
+and name the file `u2net.onnx`
+
+Now you can bring up a development environment by running:
 ```
 docker-compose up
 ```
