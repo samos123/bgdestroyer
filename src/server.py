@@ -14,6 +14,7 @@ from waitress import serve
 from rembg.bg import remove
 import firebase_admin
 from firebase_admin import auth
+from firebase_admin import firestore
 from firebase_admin.auth import InvalidIdTokenError
 import redis
 
@@ -30,6 +31,7 @@ redis_connected = False
 
 app = Flask(__name__)
 CORS(app)
+db = None
 
 try:
     logging.info("trying to connect to redis %s:%s", REDIS_HOST, REDIS_PORT)
@@ -43,10 +45,21 @@ except Exception as e:
 try:
     logging.info("Initializing firebase default app")
     default_app = firebase_admin.initialize_app()
+    db = firestore.client()
 except Exception as e:
     logging.error("error connecting to redis")
     logging.error(traceback.format_exc())
 
+def decrease_credit(uid):
+    user_ref = db.collection(u'Users').document(uid)
+    user_ref.update({"credits": firestore.Increment(-1)})
+
+def get_credits(uid):
+    user_ref = db.collection(u'Users').document(uid)
+    user = user_ref.get()
+    if user.exists:
+        return user.get("credits")
+    return None
 
 def rate_limit(f):
     @wraps(f)
@@ -54,6 +67,7 @@ def rate_limit(f):
         if not redis_connected:
             return f(*args, **kwargs)
         auth_header = request.headers.get("Authorization")
+        user = None
         if auth_header:
             token = auth_header.split(" ")[1]
             try:
@@ -61,11 +75,16 @@ def rate_limit(f):
                 uid = decoded_token['uid']
                 user = auth.get_user(uid)
                 kwargs["user"] = user
+                credits_remaining = get_credits(uid)
+                if credits_remaining and credits_remaining <= 0:
+                    return jsonify({"error": ("You are out of credits. "
+                    "Please purchase more credits or upgrade your subscription.")}), 429
             except (ValueError, InvalidIdTokenError) as e:
                 logging.error("Invalid Token:", e)
                 logging.error(traceback.format_exc())
                 return jsonify({"error": "invalid JWT token"}), 403
             except Exception as e:
+                logging.error(traceback.format_exc())
                 return jsonify({"error": "Error Validating JWT token: %s" % (e)}), 403
         else:
             forwarded_header = request.headers.get("X-Forwarded-For")
@@ -85,7 +104,11 @@ def rate_limit(f):
                 r.set(key, 1, ex=2629800) # 1 month expiry
             elif int(current_images) >= 1:
                 r.incr(key)
-        return f(*args, **kwargs)
+
+        result = f(*args, **kwargs)
+        if user:
+            decrease_credit(user.uid)
+        return result
     return inner
 
 @app.route("/remove", methods=["POST"])
