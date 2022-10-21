@@ -66,6 +66,11 @@ def rate_limit(f):
     def inner(*args, **kwargs):
         if not redis_connected:
             return f(*args, **kwargs)
+
+        rapidapi_secret = request.headers.get("X-RapidAPI-Proxy-Secret")
+        if rapidapi_secret and rapidapi_secret == os.Getenv("RAPIDAPI_SECRET"):
+            return f(*args, **kwargs)
+
         auth_header = request.headers.get("Authorization")
         user = None
         if auth_header:

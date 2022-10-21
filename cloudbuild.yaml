@@ -16,5 +16,6 @@ steps:
   entrypoint: gcloud
   args: ['beta', 'run', 'deploy', 'bg-remover', '--image', 'gcr.io/bgdestroyer/bgdestroyer-worker',
          '--region', 'us-central1', '--cpu=1', '--memory=2Gi', '--max-instances=10', '--allow-unauthenticated',
-         '--concurrency=5', '--set-secrets=REDIS_HOST=redis-host:1,REDIS_PASSWORD=redis-password:1',
+         '--concurrency=5',
+         '--set-secrets=REDIS_HOST=redis-host:1,REDIS_PASSWORD=redis-password:1,RAPIDAPI_SECRET=rapidapi-secret:1',
          '--execution-environment=gen2', '--min-instances=0']
